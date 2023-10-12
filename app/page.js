@@ -44,13 +44,38 @@ const DUMMY_DATA = [
 ];
 
 export default function Home() {
-  const [modalIsOpen, setModalIsOpen] = useState(true);
+  const [showAddIncomeModal, setShowAddIncomeModal] = useState(true);
 
   return (
     <>
       {/* Modal */}
-      <Modal show={modalIsOpen} onClose={setModalIsOpen}>
-        <h3>Hello World</h3>
+      <Modal show={showAddIncomeModal} onClose={setShowAddIncomeModal}>
+        <form>
+          <div className="flex flex-col gap-4">
+            <label htmlFor="amount">Income Amount</label>
+            <input
+            className="px-4 py-2 bg-slate-600 rounded-xl"
+              type="number"
+              name="amount"
+              min={0.01}
+              step={0.01}
+              placeholder="Enter income amount"
+              required
+           />
+          </div>
+          <div className="flex flex-col gap-4">
+            <label htmlFor="description">Description</label>
+            <input
+            className="px-4 py-2 bg-slate-600 rounded-xl"
+              type="text"
+              name="description"
+         
+              placeholder="Enter description"
+              required
+           />
+          </div>
+          <button type="submit" className="btn btn-primary"> Add Income</button>
+        </form>
       </Modal>
 
       <main className="container max-w-2xl px-6 mx-auto">
@@ -60,15 +85,17 @@ export default function Home() {
         </section>
 
         <section className="flex items-center gap-2 py-3">
-          <button
-            onClick={() => {
-              setModalIsOpen(true);
-            }}
-            className="btn btn-primary"
-          >
+          <button onClick={() => {}} className="btn btn-primary">
             + Expenses
           </button>
-          <button className="btn btn-primary-outline">+ Income</button>
+          <button
+            onClick={() => {
+              setShowAddIncomeModal(true);
+            }}
+            className="btn btn-primary-outline"
+          >
+            + Income
+          </button>
         </section>
 
         {/* Expenses */}
