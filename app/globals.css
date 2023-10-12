@@ -4,7 +4,7 @@
 
 @layer base{
   body {
-    @apply bg-slate-900 text-white
+    @apply bg-slate-900 text-white relative
   }
 
   button{
@@ -13,12 +13,20 @@
 }
 
 
-@layer utilities{
+@layer utilities {
   .btn {
     @apply px-4 py-2 text-sm capitalize rounded-xl;
   }
-  
-  .btn-danger{
-    @apply text-white bg-red-600 border-red-600
+
+  .btn-primary {
+    @apply border bg-slate-700 border-slate-700 text-lime-400;
+  }
+
+  .btn-primary-outline {
+    @apply border border-lime-400 text-lime-400;
+  }
+
+  .btn-danger {
+    @apply text-white bg-red-600 border border-red-600;
   }
 }
