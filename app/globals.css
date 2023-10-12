@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-900 text-white
+@layer base{
+  body {
+    @apply bg-slate-900 text-white
+  }
+
+  button{
+    @apply hover:scale-110 transition-all duration-100
+  }
+}
+
+
+@layer utilities{
+  .btn {
+    @apply px-4 py-2 text-sm capitalize rounded-xl;
+  }
+  
+  .btn-danger{
+    @apply text-white bg-red-600 border-red-600
+  }
 }
