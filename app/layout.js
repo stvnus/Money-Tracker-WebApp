@@ -1,7 +1,8 @@
+
 import './globals.css'
 
 import Nav from '@/app/components/molecules/nav'
-
+import FinanceContextProvider from '@/app/library/store/financeContext'
 
 
 export const metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <FinanceContextProvider />
         <Nav />
         {children}
         </body>

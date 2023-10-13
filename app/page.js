@@ -3,8 +3,11 @@
 import { useState } from "react";
 
 import { currencyFormatter } from "@/app/library/utils";
+
 import ExpenseCategoryItem from "@/app/components/organism/categoryExpense";
-import Modal from "@/app/components/organism/modal";
+
+import AddIncomeModal from "@/app/components/organism/IncomeModal";
+
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
@@ -44,39 +47,15 @@ const DUMMY_DATA = [
 ];
 
 export default function Home() {
-  const [showAddIncomeModal, setShowAddIncomeModal] = useState(true);
+  const [showAddIncomeModal, setShowAddIncomeModal] = useState(false);
 
   return (
     <>
-      {/* Modal */}
-      <Modal show={showAddIncomeModal} onClose={setShowAddIncomeModal}>
-        <form>
-          <div className="flex flex-col gap-4">
-            <label htmlFor="amount">Income Amount</label>
-            <input
-            className="px-4 py-2 bg-slate-600 rounded-xl"
-              type="number"
-              name="amount"
-              min={0.01}
-              step={0.01}
-              placeholder="Enter income amount"
-              required
-           />
-          </div>
-          <div className="flex flex-col gap-4">
-            <label htmlFor="description">Description</label>
-            <input
-            className="px-4 py-2 bg-slate-600 rounded-xl"
-              type="text"
-              name="description"
-         
-              placeholder="Enter description"
-              required
-           />
-          </div>
-          <button type="submit" className="btn btn-primary"> Add Income</button>
-        </form>
-      </Modal>
+      {/* Add Income Modal */}
+      <AddIncomeModal
+        show={showAddIncomeModal}
+        onClose={setShowAddIncomeModal}
+      />
 
       <main className="container max-w-2xl px-6 mx-auto">
         <section className="py-3">
@@ -105,6 +84,7 @@ export default function Home() {
             {DUMMY_DATA.map((expense) => {
               return (
                 <ExpenseCategoryItem
+                  key={expense.id}
                   color={expense.color}
                   title={expense.title}
                   total={expense.total}
