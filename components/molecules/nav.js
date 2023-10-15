@@ -16,7 +16,7 @@ function Nav() {
           </div>
 
           {/* name */}
-          <small>Hi, Leon!</small>
+          <small>Hi, any</small>
         </div>
 
         {/* Right side of our navigation */}
