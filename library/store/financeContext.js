@@ -3,7 +3,7 @@
 import { createContext, useState, useEffect } from "react";
 
 // Firebase
-import { db } from "@/app/library/firebase/api";
+import { db } from "@/library/firebase/api";
 import {
   collection,
   addDoc,
@@ -14,14 +14,12 @@ import {
 
 export const financeContext = createContext({
   income: [],
-  expense: [],
   addIncomeItem: async () => {},
   removeIncomeItem: async () => {},
 });
 
 export default function FinanceContextProvider({ children }) {
   const [income, setIncome] = useState([]);
-  const [expense, setExpense] = useState([]);
 
   const addIncomeItem = async (newIncome) => {
     const collectionRef = collection(db, "income");
@@ -58,7 +56,7 @@ export default function FinanceContextProvider({ children }) {
     }
   };
 
-  const values = { income, expense, addIncomeItem, removeIncomeItem };
+  const values = { income, addIncomeItem, removeIncomeItem };
 
   useEffect(() => {
     const getIncomeData = async () => {
@@ -76,22 +74,7 @@ export default function FinanceContextProvider({ children }) {
       setIncome(data);
     };
 
-    const getExpenseData = async () => {
-      const collectionRef = collection(db, "expense");
-      const docsSnap = await getDocs(collectionRef);
-      
-      const data = docsSnap.docs.map((doc) => {
-        return {
-          id: doc.id,
-          ...doc.data(),
-        
-        };
-      });
-      setExpense(data);
-    
-    }
     getIncomeData();
-    getExpenseData();
   }, []);
 
   return (

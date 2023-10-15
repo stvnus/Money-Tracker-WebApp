@@ -1,12 +1,12 @@
 import { useRef, useEffect, useContext } from "react";
-import { currencyFormatter } from "@/app/library/utils";
+import { currencyFormatter } from "@/library/utils";
 
-import { financeContext } from "@/app/library/store/financeContext";
+import { financeContext } from "@/library/store/financeContext";
 
 // Icons
 import { FaRegTrashAlt } from "react-icons/fa";
 
-import Modal from "@/app/components/organism/modal";
+import Modal from "@/components/organism/modal";
 
 function AddIncomeModal({ show, onClose }) {
   const amountRef = useRef();
@@ -19,9 +19,9 @@ function AddIncomeModal({ show, onClose }) {
     e.preventDefault();
 
     const newIncome = {
-      amount: +amountRef.current.value,
+      amount: amountRef.current.value,
       description: descriptionRef.current.value,
-      createdAt: new Date(),
+      CreatedAt: new Date(),
     };
 
     try {
@@ -81,7 +81,7 @@ function AddIncomeModal({ show, onClose }) {
             <div className="flex justify-between item-center" key={i.id}>
               <div>
                 <p className="font-semibold">{i.description}</p>
-                <small className="text-xs">{i.createdAt.toISOString()}</small>
+                <small className="text-xs">{i.CreatedAt.toISOString()}</small>
               </div>
               <p className="flex items-center gap-2">
                 {currencyFormatter(i.amount)}
