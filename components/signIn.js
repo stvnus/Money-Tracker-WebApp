@@ -11,7 +11,7 @@ function SignIn() {
     
     <main className="container max-w-4xl px-6 mx-auto">
         
-      <h1 className="mb-6 text-6xl font-bold text-center">YooMoney Tracker</h1>
+      <h1 className="mb-6 text-6xl font-bold text-center">YooMoney Tracker Tool</h1>
 
       <div className="flex flex-col overflow-hidden shadow-md shadow-slate-500 bg-slate-800 rounded-2xl">
         <div className="h-52">
