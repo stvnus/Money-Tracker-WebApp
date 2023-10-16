@@ -21,7 +21,8 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function Home() {
   const [showAddIncomeModal, setShowAddIncomeModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
-
+  const [showZeroBalanceNotification, setShowZeroBalanceNotification] = useState(false);
+  
   const [balance, setBalance] = useState(0);
 
   const { expenses, income } = useContext(financeContext);
@@ -36,14 +37,32 @@ export default function Home() {
       }, 0);
 
     setBalance(newBalance);
+
+   if (newBalance === 0) {
+      setShowZeroBalanceNotification(true);
+    } else {
+      setShowZeroBalanceNotification(false);
+    }
   }, [expenses, income]);
 
 
   if(!user) {
     return <SignIn />
+
+  }
+  const expenseLabels = expenses.map((expense) => expense.title);
+  const expenseTotals = expenses.map((expense) => expense.total);
+  const expenseColors = expenses.map((expense) => expense.color);
+
+  // Add remaining balance if it's positive or zero
+  if (balance >= 0) {
+    expenseLabels.push("Sisa Saldo");
+    expenseTotals.push(balance);
+    expenseColors.push("#00ff00"); // You can choose the color you prefer
   }
   return (
     <>
+   
       {/* Add Income Modal */}
       <AddIncomeModal
         show={showAddIncomeModal}
@@ -57,9 +76,14 @@ export default function Home() {
       />
 
       <main className="container max-w-2xl px-6 mx-auto">
-        <section className="py-3">
-          <small className="text-gray-400 text-md">My Balance</small>
+      <section className="py-3">
+          <small className="text-gray-400 text-md">Saldo</small>
           <h2 className="text-4xl font-bold">{currencyFormatter(balance)}</h2>
+          {showZeroBalanceNotification && (
+            <div className="text-red-500 mt-2">
+              Harap input saldo pemasukan terlebih dahulu
+            </div>
+          )}
         </section>
 
         <section className="flex items-center gap-2 py-3">
@@ -69,7 +93,7 @@ export default function Home() {
             }}
             className="btn btn-primary"
           >
-            + Expenses
+            + Pengeluaran
           </button>
           <button
             onClick={() => {
@@ -77,7 +101,7 @@ export default function Home() {
             }}
             className="btn btn-primary-outline"
           >
-            + Income
+            + Pemasukan
           </button>
         </section>
 
@@ -97,12 +121,12 @@ export default function Home() {
           <div className="w-1/2 mx-auto">
             <Doughnut
               data={{
-                labels: expenses.map((expense) => expense.title),
+                labels: expenseLabels,
                 datasets: [
                   {
                     label: "Expenses",
-                    data: expenses.map((expense) => expense.total),
-                    backgroundColor: expenses.map((expense) => expense.color),
+                    data: expenseTotals,
+                    backgroundColor: expenseColors,
                     borderColor: ["#18181b"],
                     borderWidth: 5,
                   },

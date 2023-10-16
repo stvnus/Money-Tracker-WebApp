@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { authContext } from "@/library/store/authContext";
-import { ImStatsBars } from "react-icons/im";
+
 
 function Nav() {
   const {user, loading , logout} = useContext(authContext)
@@ -21,7 +21,7 @@ function Nav() {
         </div>
 
         {/* name */}
-        <small>Hi,{user.displayName}</small>
+        <h1>Hi, {user.displayName}</h1>
       </div>
         )}
 
@@ -29,9 +29,7 @@ function Nav() {
         {/* Right side of our navigation */}
         {user && !loading &&(
           <nav className="flex items-center gap-4">
-          <div>
-            <ImStatsBars className="text-2xl" />
-          </div>
+       
           <div>
             <button onClick={logout} className="btn btn-danger">Sign out</button>
           </div>
