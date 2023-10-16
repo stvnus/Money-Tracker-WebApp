@@ -2,7 +2,8 @@ import { useRef, useEffect, useContext } from "react";
 import { currencyFormatter } from "@/library/utils";
 
 import { financeContext } from "@/library/store/financeContext";
-
+import { authContext } from "@/library/store/authContext";
+import {toast} from "react-toastify"
 // Icons
 import { FaRegTrashAlt } from "react-icons/fa";
 
@@ -14,6 +15,7 @@ function AddIncomeModal({ show, onClose }) {
   const { income, addIncomeItem, removeIncomeItem } =
     useContext(financeContext);
 
+  const {user} = useContext(authContext);
   // Handler Functions
   const addIncomeHandler = async (e) => {
     e.preventDefault();
@@ -22,22 +24,27 @@ function AddIncomeModal({ show, onClose }) {
       amount: +amountRef.current.value,
       description: descriptionRef.current.value,
       CreatedAt: new Date(),
+      uid : user.uid
     };
 
     try {
       await addIncomeItem(newIncome);
       descriptionRef.current.value = "";
       amountRef.current.value = "";
+      toast.success("data income berhasil ditambahkan")
     } catch (error) {
       console.log(error.message);
+      toast.error(error.message)
     }
   };
 
   const deleteIncomeEntryHandler = async (incomeId) => {
     try {
       await removeIncomeItem(incomeId);
+      toast.success("data income berhasil dihapus")
     } catch (error) {
       console.log(error.message);
+      toast.error(error.message)
     }
   };
 
