@@ -2,7 +2,7 @@
 
 import { useState, useContext, useEffect } from "react";
 import { financeContext } from "@/library/store/financeContext";
-
+import { authContext } from "@/library/store/authContext";
 import { currencyFormatter } from "@/library/utils";
 
 import ExpenseCategoryItem from "@/components/organism/categoryExpense";
@@ -10,8 +10,11 @@ import ExpenseCategoryItem from "@/components/organism/categoryExpense";
 import AddIncomeModal from "@/components/organism/incomeModal";
 import AddExpensesModal from "@/components/organism/expenseModal";
 
+
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import SignIn from "@/components/signIn";
+
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -22,7 +25,7 @@ export default function Home() {
   const [balance, setBalance] = useState(0);
 
   const { expenses, income } = useContext(financeContext);
-
+  const {user} = useContext(authContext)
   useEffect(() => {
     const newBalance =
       income.reduce((total, i) => {
@@ -35,6 +38,10 @@ export default function Home() {
     setBalance(newBalance);
   }, [expenses, income]);
 
+
+  if(!user) {
+    return <SignIn />
+  }
   return (
     <>
       {/* Add Income Modal */}
