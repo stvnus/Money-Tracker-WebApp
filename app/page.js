@@ -96,7 +96,7 @@ export default function Home() {
       </svg>
     </div>
     <p className="text-amber-200/90 text-xs font-medium text-left leading-none">
-      Harap input saldo pemasukan terlebih dahulu
+      Input saldo pemasukan terlebih dahulu
     </p>
   </div>
   )}
