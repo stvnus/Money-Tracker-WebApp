@@ -31,7 +31,7 @@ function Nav() {
           <nav className="flex items-center gap-4">
        
           <div>
-            <button onClick={logout} className="btn btn-danger">Sign out</button>
+            <button onClick={logout} className="btn btn-danger">Logout</button>
           </div>
         </nav>
         )}
