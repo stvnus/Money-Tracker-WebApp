@@ -53,11 +53,20 @@ function ViewExpenseModal({ show, onClose, expense }) {
         {expense.items.map((item) => {
           return (
             <div key={item.id} className="flex items-center justify-between">
-              <small>
-                {item.CreatedAt.toMillis
-                  ? new Date(item.CreatedAt.toMillis()).toISOString()
-                  : item.CreatedAt.toISOString()}
-              </small>
+              <small className="text-xs text-slate-400">
+  {(item.CreatedAt?.toMillis 
+    ? new Date(item.CreatedAt.toMillis()) 
+    : new Date(item.CreatedAt)
+  ).toLocaleString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })}
+</small>
               <p className="flex items-center gap-2">
                 {currencyFormatter(item.amount)}
                 <button

@@ -4,7 +4,7 @@ import { useState, useContext, useRef } from "react";
 import { financeContext } from "@/library/store/financeContext";
 
 import { v4 as uuidv4 } from "uuid";
-import {toast} from "react-toastify"
+import { toast } from "react-toastify";
 import Modal from "@/components/organism/modal";
 
 function AddExpensesModal({ show, onClose }) {
@@ -43,10 +43,10 @@ function AddExpensesModal({ show, onClose }) {
       setExpenseAmount("");
       setSelectedCategory(null);
       onClose();
-      toast.success("Expense item ditambahkan")
+      toast.success("Expense item ditambahkan");
     } catch (error) {
       console.log(error.message);
-      toast.error(error.message)
+      toast.error(error.message);
     }
   };
 
@@ -57,10 +57,10 @@ function AddExpensesModal({ show, onClose }) {
     try {
       await addCategory({ title, color, total: 0 });
       setShowAddExpense(false);
-      toast.success("Kategori telah ditambahkan")
+      toast.success("Kategori telah ditambahkan");
     } catch (error) {
       console.log(error.message);
-      toast.error(error.message)
+      toast.error(error.message);
     }
   };
 
@@ -96,7 +96,7 @@ function AddExpensesModal({ show, onClose }) {
           </div>
 
           {showAddExpense && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <input type="text" placeholder="Enter Title" ref={titleRef} />
 
               <label>Pick Color</label>
@@ -118,41 +118,59 @@ function AddExpensesModal({ show, onClose }) {
             </div>
           )}
 
-          {expenses.map((expense) => {
-            return (
-              <button
-                key={expense.id}
-                onClick={() => {
-                  setSelectedCategory(expense.id);
-                }}
-              >
-                <div
-                  style={{
-                    boxShadow:
-                      expense.id === selectedCategory ? "1px 1px 4px" : "none",
+          {/* === KONTANER SCROLL DIMULAI DI SINI === */}
+          <div className="max-h-[190px] overflow-y-auto overflow-x-hidden pr-2 pl-2 py-2 flex flex-col gap-3 w-full
+  [&::-webkit-scrollbar]:w-2
+  [&::-webkit-scrollbar-track]:bg-slate-800
+  [&::-webkit-scrollbar-thumb]:bg-slate-600
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [scrollbar-color:#475569_#1e293b] [scrollbar-width:thin]">
+            {expenses.map((expense) => {
+              return (
+                <button
+                  key={expense.id}
+                  onClick={() => {
+                    setSelectedCategory(expense.id);
                   }}
-                  className="flex items-center justify-between px-4 py-4 bg-slate-700 rounded-3xl"
+                  className="w-full text-left block focus:outline-none"
                 >
-                  <div className="flex items-center gap-2">
-                    {/* Colored circle */}
-                    <div
-                      className="w-[25px] h-[25px] rounded-full"
-                      style={{
-                        backgroundColor: expense.color,
-                      }}
-                    />
-                    <h4 className="capitalize">{expense.title}</h4>
+                  <div
+                    style={{
+                      boxShadow:
+                        expense.id === selectedCategory
+                          ? "0px 0px 8px #a3e635"
+                          : "none",
+                      border:
+                        expense.id === selectedCategory
+                          ? "1px solid #a3e635"
+                          : "1px solid transparent",
+                    }}
+                    className="flex items-center justify-between px-4 py-3 bg-slate-700 rounded-2xl transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Colored circle */}
+                      <div
+                        className="w-[18px] h-[18px] rounded-full flex-shrink-0"
+                        style={{
+                          backgroundColor: expense.color,
+                        }}
+                      />
+                      <h4 className="capitalize text-sm font-medium truncate">
+                        {expense.title}
+                      </h4>
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+          {/* === KONTANER SCROLL BERAKHIR DI SINI === */}
         </div>
       )}
 
       {expenseAmount > 0 && selectedCategory && (
         <div className="mt-6">
-          <button className="btn btn-primary" onClick={addExpenseItemHandler}>
+          <button className="btn btn-primary w-full" onClick={addExpenseItemHandler}>
             Add Expense
           </button>
         </div>

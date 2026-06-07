@@ -9,7 +9,7 @@ import ExpenseCategoryItem from "@/components/organism/categoryExpense";
 
 import AddIncomeModal from "@/components/organism/incomeModal";
 import AddExpensesModal from "@/components/organism/expenseModal";
-
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
@@ -76,34 +76,54 @@ export default function Home() {
       />
 
       <main className="container max-w-2xl px-6 mx-auto">
-      <section className="py-3">
-          <small className="text-gray-400 text-md">Saldo</small>
-          <h2 className="text-4xl font-bold">{currencyFormatter(balance)}</h2>
-          {showZeroBalanceNotification && (
-            <div className="text-red-500 mt-2">
-              Harap input saldo pemasukan terlebih dahulu
-            </div>
-          )}
-        </section>
+      <section className="py-3 px-2 mb-1 bg-slate-800/50 rounded-2xl border border-white/10 shadow-xl backdrop-blur-sm flex flex-col items-center justify-center text-center">
+  <div className="flex flex-col gap-1 items-center">
+    <small className="text-slate-400 text-lg font-medium tracking-wide">
+      Saldo Saat Ini
+    </small>
+    <h2 className="text-3xl font-bold text-white tracking-tight">
+      {currencyFormatter(balance)}
+    </h2>
+  </div>
 
-        <section className="flex items-center gap-2 py-3">
-          <button
-            onClick={() => {
-              setShowAddExpenseModal(true);
-            }}
-            className="btn btn-primary"
-          >
-            + Pengeluaran
-          </button>
-          <button
-            onClick={() => {
-              setShowAddIncomeModal(true);
-            }}
-            className="btn btn-primary-outline"
-          >
-            + Pemasukan
-          </button>
-        </section>
+  {showZeroBalanceNotification && (
+    <div className="mt-3 flex items-center justify-center gap-2 py-1.5 px-3 bg-amber-500/10 border border-amber-500/20 rounded-xl max-w-sm mx-auto">
+    <div className="text-amber-500 flex-shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <p className="text-amber-200/90 text-xs font-medium text-left leading-none">
+      Harap input saldo pemasukan terlebih dahulu
+    </p>
+  </div>
+  )}
+          <section className="flex items-center gap-4 py-3">
+    <button
+    onClick={() => {
+      setShowAddIncomeModal(true);
+    }}
+    className="btn btn-success-outline flex items-center gap-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all"
+    >
+    <ArrowDownLeft size={20} />
+    <span>Pemasukan</span>
+    </button>
+  
+    <button
+    onClick={() => {
+      setShowAddExpenseModal(true);
+    }}
+    className="btn btn-secondary-outline flex items-center gap-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+   >
+    <ArrowUpRight size={20} />
+    <span>Pengeluaran</span>
+  </button>
+</section>
+</section>
+
+
 
         {/* Expenses */}
         <section className="py-6">
