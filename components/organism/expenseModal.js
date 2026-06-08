@@ -9,6 +9,8 @@ import Modal from "@/components/organism/modal";
 
 function AddExpensesModal({ show, onClose }) {
   const [expenseAmount, setExpenseAmount] = useState("");
+  // TAMBAHKAN STATE DESCRIPTION
+  const [expenseDescription, setExpenseDescription] = useState(""); 
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showAddExpense, setShowAddExpense] = useState(false);
 
@@ -18,6 +20,12 @@ function AddExpensesModal({ show, onClose }) {
   const colorRef = useRef();
 
   const addExpenseItemHandler = async () => {
+    // Validasi opsional: pastikan deskripsi diisi jika diinginkan
+    if (!expenseDescription.trim()) {
+      toast.warning("Silakan masukkan deskripsi pengeluaran");
+      return;
+    }
+
     const expense = expenses.find((e) => {
       return e.id === selectedCategory;
     });
@@ -30,6 +38,7 @@ function AddExpensesModal({ show, onClose }) {
         ...expense.items,
         {
           amount: +expenseAmount,
+          description: expenseDescription, // MASUKKAN DESCRIPTION KE DATABASE/STORE
           CreatedAt: new Date(),
           id: uuidv4(),
         },
@@ -41,6 +50,7 @@ function AddExpensesModal({ show, onClose }) {
 
       console.log(newExpense);
       setExpenseAmount("");
+      setExpenseDescription(""); // RESET STATE
       setSelectedCategory(null);
       onClose();
       toast.success("Expense item ditambahkan");
@@ -66,113 +76,150 @@ function AddExpensesModal({ show, onClose }) {
 
   return (
     <Modal show={show} onClose={onClose}>
+      {/* 1. Input Utama */}
       <div className="flex flex-col gap-4">
-        <label>Enter an amount..</label>
-        <input
-          type="number"
-          min={0.01}
-          step={0.01}
-          placeholder="Enter expense amount"
-          value={expenseAmount}
-          onChange={(e) => {
-            setExpenseAmount(e.target.value);
-          }}
-        />
+        <div className="flex flex-col gap-2">
+          <label className="text-slate-200 font-medium">Enter an amount..</label>
+          <input
+            type="number"
+            min={0.01}
+            step={0.01}
+            placeholder="Enter expense amount"
+            value={expenseAmount}
+            onChange={(e) => {
+              setExpenseAmount(e.target.value);
+            }}
+          />
+        </div>
+
+        {/* TAMBAHKAN INPUT DESCRIPTION DI SINI */}
+        {expenseAmount > 0 && (
+          <div className="flex flex-col gap-1 transition-all duration-300">
+            <label className="text-slate-200 font-medium">Description</label>
+            <input
+              type="text"
+              placeholder="E.g., Beli nasi goreng, Bayar listrik..."
+              value={expenseDescription}
+              onChange={(e) => {
+                setExpenseDescription(e.target.value);
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Expense Categories */}
-      {expenseAmount > 0 && (
-        <div className="flex flex-col gap-4 mt-6">
+      {/* 2. Modul Kategori dan Button */}
+      {expenseAmount > 0 && expenseDescription.trim() > "" && (
+        <div className="flex flex-col gap-3 mt-3 transition-all duration-300">
+          
+          {/* Header Kategori */}
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl capitalize">Select expense category</h3>
+            <h3 className="text capitalize text-slate-100">Select expense category</h3>
             <button
               onClick={() => {
                 setShowAddExpense(true);
               }}
-              className="text-lime-400"
+              className="text-lime-400 hover:text-lime-300 transition-colors"
             >
               + New Category
             </button>
           </div>
 
-          {showAddExpense && (
-            <div className="flex items-center justify-between gap-2">
-              <input type="text" placeholder="Enter Title" ref={titleRef} />
+          {/* Form Tambah Kategori Baru */}
+       {showAddExpense && (
+  <div className="flex items-center justify-between gap-2 p-1.5 bg-slate-800/50 rounded-xl border border-slate-700 text-xs">
+    {/* Input Title - Dikecilkan padding-nya dengan py-1 px-2 */}
+    <input 
+      type="text" 
+      placeholder="Enter Title" 
+      ref={titleRef} 
+      className="bg-slate-900 border-slate-700 text-xs py-1 px-2 h-7 w-full rounded-md" 
+    />
+    
+    <label className="text-[11px] text-slate-400 whitespace-nowrap">Pick Color</label>
+    
+    {/* Input Color - Diperkecil tingginya dari h-10 menjadi h-7 */}
+    <input 
+      type="color" 
+      className="w-10 h-7 border-none cursor-pointer bg-transparent p-0 flex-shrink-0" 
+      ref={colorRef} 
+    />
+    
+    {/* Tombol Create - Menyesuaikan tinggi h-7 */}
+    <button
+      onClick={addCategoryHandler}
+      className="btn btn-primary-outline text-[11px] px-2.5 h-7 flex items-center justify-center flex-shrink-0"
+    >
+      Create
+    </button>
+    
+    {/* Tombol Cancel - Menyesuaikan tinggi h-7 */}
+    <button
+      onClick={() => {
+        setShowAddExpense(false);
+      }}
+      className="btn btn-danger text-[11px] px-2.5 h-7 flex items-center justify-center flex-shrink-0"
+    >
+      Cancel
+    </button>
+  </div>
+)}
 
-              <label>Pick Color</label>
-              <input type="color" className="w-24 h-10" ref={colorRef} />
-              <button
-                onClick={addCategoryHandler}
-                className="btn btn-primary-outline"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddExpense(false);
+          {/* Daftar Scroll Kategori */}
+         <div className="max-h-[200px] overflow-y-auto overflow-x-hidden pr-2 pl-2 py-2 grid grid-cols-2 gap-3 w-full
+    [&::-webkit-scrollbar]:w-2
+    [&::-webkit-scrollbar-track]:bg-slate-800
+    [&::-webkit-scrollbar-thumb]:bg-slate-600
+    [&::-webkit-scrollbar-thumb]:rounded-full
+    [scrollbar-color:#475569_#1e293b] [scrollbar-width:thin]">
+    {expenses.map((expense) => {
+      return (
+        <button
+          key={expense.id}
+          onClick={() => {
+            setSelectedCategory(expense.id);
+          }}
+          className="w-full text-left block focus:outline-none"
+        >
+          <div
+            style={{
+              boxShadow:
+                expense.id === selectedCategory
+                  ? "0px 0px 8px #a3e635"
+                  : "none",
+              border:
+                expense.id === selectedCategory
+                  ? "1px solid #a3e635"
+                  : "1px solid transparent",
+            }}
+            className="flex items-center justify-between px-3 py-3 bg-slate-700 rounded-2xl transition-all hover:bg-slate-600/50"
+          >
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              <div
+                className="w-[16px] h-[16px] rounded-full flex-shrink-0"
+                style={{
+                  backgroundColor: expense.color,
                 }}
-                className="btn btn-danger"
-              >
-                Cancel
+              />
+              <h4 className="capitalize text-xs font-medium truncate text-slate-200 w-full">
+                {expense.title}
+              </h4>
+            </div>
+          </div>
+        </button>
+      );
+    })}
+</div>
+
+          {/* Tombol Utama */}
+          {selectedCategory && (
+            <div className="mt-2 pt-2 border-t border-slate-800/60 w-full">
+              <button className="btn btn-primary w-full py-3" onClick={addExpenseItemHandler}>
+                Add Expense
               </button>
             </div>
           )}
 
-          {/* === KONTANER SCROLL DIMULAI DI SINI === */}
-          <div className="max-h-[190px] overflow-y-auto overflow-x-hidden pr-2 pl-2 py-2 flex flex-col gap-3 w-full
-  [&::-webkit-scrollbar]:w-2
-  [&::-webkit-scrollbar-track]:bg-slate-800
-  [&::-webkit-scrollbar-thumb]:bg-slate-600
-  [&::-webkit-scrollbar-thumb]:rounded-full
-  [scrollbar-color:#475569_#1e293b] [scrollbar-width:thin]">
-            {expenses.map((expense) => {
-              return (
-                <button
-                  key={expense.id}
-                  onClick={() => {
-                    setSelectedCategory(expense.id);
-                  }}
-                  className="w-full text-left block focus:outline-none"
-                >
-                  <div
-                    style={{
-                      boxShadow:
-                        expense.id === selectedCategory
-                          ? "0px 0px 8px #a3e635"
-                          : "none",
-                      border:
-                        expense.id === selectedCategory
-                          ? "1px solid #a3e635"
-                          : "1px solid transparent",
-                    }}
-                    className="flex items-center justify-between px-4 py-3 bg-slate-700 rounded-2xl transition-all"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* Colored circle */}
-                      <div
-                        className="w-[18px] h-[18px] rounded-full flex-shrink-0"
-                        style={{
-                          backgroundColor: expense.color,
-                        }}
-                      />
-                      <h4 className="capitalize text-sm font-medium truncate">
-                        {expense.title}
-                      </h4>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {/* === KONTANER SCROLL BERAKHIR DI SINI === */}
-        </div>
-      )}
-
-      {expenseAmount > 0 && selectedCategory && (
-        <div className="mt-6">
-          <button className="btn btn-primary w-full" onClick={addExpenseItemHandler}>
-            Add Expense
-          </button>
         </div>
       )}
     </Modal>

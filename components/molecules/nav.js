@@ -26,7 +26,7 @@ function Nav() {
         )}
 
 
-        {/* Right side of our navigation */}
+ 
         {user && !loading &&(
           <nav className="flex items-center gap-4">
        
