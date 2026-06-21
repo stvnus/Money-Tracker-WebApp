@@ -89,6 +89,17 @@ function AddExpensesModal({ show, onClose }) {
             onChange={(e) => {
               setExpenseAmount(e.target.value);
             }}
+           onKeyDown={(e) => {
+     if (
+      e.key === "e" || 
+      e.key === "E" || 
+      e.key === "-" || 
+      e.key === "+" || 
+      e.key === "."
+    ) {
+      e.preventDefault();
+    }
+  }}
           />
         </div>
 

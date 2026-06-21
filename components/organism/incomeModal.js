@@ -59,8 +59,18 @@ function AddIncomeModal({ show, onClose }) {
           ref={amountRef}
           min={0.01}
           step={0.01}
-          placeholder="Enter income amount"
-          required
+          placeholder="Enter income amount" required
+        onKeyDown={(e) => {
+    if (
+      e.key === "e" || 
+      e.key === "E" || 
+      e.key === "-" || 
+      e.key === "+" || 
+      e.key === "."
+    ) {
+      e.preventDefault();
+    }
+  }}
         />
       </div>
   
