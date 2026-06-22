@@ -28,12 +28,15 @@ export default function Home() {
   
   const [balance, setBalance] = useState(0);
   
+  // STATE FILTER TAB (expense atau income)
+  const [activeTab, setActiveTab] = useState("expense");
+
   // STATE FILTER (Default tahun sekarang, bulan semua)
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [availableYears, setAvailableYears] = useState([new Date().getFullYear().toString()]);
 
-  const { expenses, income } = useContext(financeContext);
+  const { expenses, income, removeIncomeItem } = useContext(financeContext);
   const { user } = useContext(authContext);
 
   // UTILITY UNTUK PARSING DATE
@@ -74,7 +77,7 @@ export default function Home() {
     }
   }, [expenses, income]);
 
-// DOWNLOAD PDF REPORT WITH TOTALS
+  // DOWNLOAD PDF REPORT WITH TOTALS
   const downloadPDFReport = () => {
     const doc = new jsPDF();
     const timestamp = new Date().toLocaleDateString('id-ID', {
@@ -89,7 +92,6 @@ export default function Home() {
     const reportMonthText = selectedMonth === "all" ? "SEMUA BULAN" : monthNames[parseInt(selectedMonth)].toUpperCase();
     const reportYearText = selectedYear === "all" ? "SEMUA TAHUN" : selectedYear;
 
-    // 1. Header Laporan Dokumen
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("LAPORAN KEUANGAN PERSONAL", 14, 20);
@@ -106,9 +108,6 @@ export default function Home() {
     doc.setFont("helvetica", "bold");
     doc.text(`TOTAL SALDO KESELURUHAN: ${currencyFormatter(balance)}`, 14, 50);
 
-    // ==========================================
-    // 2. BAGIAN INCOMOE (PEMASUKAN)
-    // ==========================================
     const filteredIncome = income.filter((inc) => {
       const incDate = parseDate(inc.CreatedAt);
       const matchMonth = selectedMonth === "all" || incDate.getMonth() === parseInt(selectedMonth);
@@ -116,7 +115,6 @@ export default function Home() {
       return matchMonth && matchYear;
     });
 
-    // HITUNG TOTAL INCOME PADA PERIODE INI
     const totalPeriodIncome = filteredIncome.reduce((sum, item) => sum + item.amount, 0);
 
     doc.text("A. Riwayat Pemasukan (Income)", 14, 62);
@@ -128,7 +126,6 @@ export default function Home() {
       currencyFormatter(inc.amount)
     ]);
 
-    // Tambahkan baris total di paling bawah tabel income
     incomeRows.push([
       "", 
       "TOTAL PEMASUKAN PERIODE INI", 
@@ -143,7 +140,6 @@ export default function Home() {
       theme: "striped",
       headStyles: { fillColor: [34, 197, 94] }, 
       styles: { font: "helvetica", fontSize: 9 },
-      // Membuat baris terakhir (Total) bertekstur Bold
       didParseCell: (data) => {
         if (data.row.index === incomeRows.length - 1) {
           data.cell.styles.fontStyle = 'bold';
@@ -151,12 +147,9 @@ export default function Home() {
       }
     });
 
-    // ==========================================
-    // 3. BAGIAN EXPENSE (PENGELUARAN)
-    // ==========================================
     const expenseRows = [];
     let no = 1;
-    let totalPeriodExpense = 0; // HITUNG TOTAL EXPENSE PADA PERIODE INI
+    let totalPeriodExpense = 0;
 
     expenses.forEach((category) => {
       category.items.forEach((item) => {
@@ -165,7 +158,7 @@ export default function Home() {
         const matchYear = selectedYear === "all" || itemDate.getFullYear().toString() === selectedYear;
         
         if (matchMonth && matchYear) {
-          totalPeriodExpense += item.amount; // Tambahkan ke total pengeluaran periode
+          totalPeriodExpense += item.amount;
           expenseRows.push([
             no++,
             category.title,
@@ -177,7 +170,6 @@ export default function Home() {
       });
     });
 
-    // Tambahkan baris total di paling bawah tabel expense
     expenseRows.push([
       "", 
       "TOTAL PENGELUARAN PERIODE INI", 
@@ -196,7 +188,6 @@ export default function Home() {
       theme: "striped",
       headStyles: { fillColor: [239, 68, 68] }, 
       styles: { font: "helvetica", fontSize: 9 },
-      // Membuat baris terakhir (Total) bertekstur Bold
       didParseCell: (data) => {
         if (data.row.index === expenseRows.length - 1) {
           data.cell.styles.fontStyle = 'bold';
@@ -204,9 +195,6 @@ export default function Home() {
       }
     });
 
-    // ==========================================
-    // 4. RINGKASAN AKHIR PERIODE (OPSIONAL & BAGUS UNTUK REVIEW)
-    // ==========================================
     const finalYAfterExpense = doc.lastAutoTable.finalY || 150;
     doc.setFont("helvetica", "bold");
     doc.text("C. Ringkasan Arus Kas Periode Ini", 14, finalYAfterExpense + 15);
@@ -219,15 +207,36 @@ export default function Home() {
     doc.setFont("helvetica", "bold");
     doc.text(`= Selisih Periode Ini : ${currencyFormatter(netPeriod)}`, 20, finalYAfterExpense + 37);
 
-    // Nama file PDF menyesuaikan bulan dan tahun pilihan
     const fileMonthName = selectedMonth === "all" ? "Semua_Bulan" : monthNames[parseInt(selectedMonth)];
     const fileYearName = selectedYear === "all" ? "Semua_Tahun" : selectedYear;
     doc.save(`Laporan_${fileMonthName}_${fileYearName}.pdf`);
   };
+
   if (!user) {
     return <SignIn />;
   }
 
+  // LOGIKA GROUPING UNTUK INCOME BERDASARKAN KATEGORI
+  const groupedIncomeMap = income.reduce((groups, item) => {
+    const categoryTitle = item.category || "Uncategorized";
+    const categoryColor = item.categoryColor || "#64748b";
+    
+    if (!groups[categoryTitle]) {
+      groups[categoryTitle] = {
+        title: categoryTitle,
+        color: categoryColor,
+        total: 0,
+        items: []
+      };
+    }
+    groups[categoryTitle].total += item.amount;
+    groups[categoryTitle].items.push(item);
+    return groups;
+  }, {});
+
+  const groupedIncomeArray = Object.values(groupedIncomeMap);
+
+  // DATA GRAFIK DOUGHNUT UNTUK EXPENSE
   const expenseLabels = expenses.map((expense) => expense.title);
   const expenseTotals = expenses.map((expense) => expense.total);
   const expenseColors = expenses.map((expense) => expense.color);
@@ -238,14 +247,19 @@ export default function Home() {
     expenseColors.push("#00ff00");
   }
 
+  // DATA GRAFIK DOUGHNUT UNTUK INCOME
+  const incomeLabels = groupedIncomeArray.map((inc) => inc.title);
+  const incomeTotals = groupedIncomeArray.map((inc) => inc.total);
+  const incomeColors = groupedIncomeArray.map((inc) => inc.color);
+
   return (
     <>
       <AddIncomeModal show={showAddIncomeModal} onClose={setShowAddIncomeModal} />
       <AddExpensesModal show={showAddExpenseModal} onClose={setShowAddExpenseModal} />
 
-      <main className="container max-w-2xl px-6 mx-auto">
+      <main className="container max-w-2xl px-6 mx-auto mb-12">
         
-        {/* CARD SALDO UTAMA (BERSIH TANPA FILTER MENUMPUK) */}
+        {/* CARD SALDO UTAMA */}
         <section className="py-6 px-4 mb-4 bg-slate-800/50 rounded-2xl border border-white/10 shadow-xl backdrop-blur-sm flex flex-col items-center justify-center text-center">
           <div className="flex flex-col gap-1 items-center">
             <small className="text-slate-400 text-sm font-medium tracking-wide uppercase">
@@ -283,7 +297,7 @@ export default function Home() {
           </section>
         </section>
 
-        {/* CONTROLLER FILTER BARU: DI LUAR CARD & LEBIH LUAS */}
+        {/* CONTROLLER FILTER PERIODE */}
         <section className="mb-6 p-4 bg-slate-800/30 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
             <Calendar size={16} className="text-lime-500" />
@@ -291,7 +305,6 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* 1. Pilih Tahun Dulu */}
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
@@ -303,7 +316,6 @@ export default function Home() {
               ))}
             </select>
 
-            {/* 2. Baru Pilih Bulan */}
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
@@ -324,7 +336,6 @@ export default function Home() {
               <option value="11">Desember</option>
             </select>
 
-            {/* 3. Tombol Ekspor PDF */}
             <button 
               onClick={downloadPDFReport}
               className="p-2 rounded-lg bg-lime-500 text-slate-900 hover:bg-lime-400 active:scale-95 transition-all flex items-center justify-center gap-1.5 font-semibold text-sm px-4"
@@ -335,36 +346,122 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Expenses */}
-        <section className="py-4">
-          <h3 className="text-2xl font-bold mb-4">My Expenses</h3>
-          <div className="flex flex-col gap-4">
-            {expenses.map((expense) => {
-              return <ExpenseCategoryItem key={expense.id} expense={expense} />;
-            })}
-          </div>
+        {/* PILL SWITCHER TAB */}
+        <section className="mb-6 p-1 bg-slate-900 rounded-xl border border-slate-800 flex w-full relative">
+          <button
+            onClick={() => setActiveTab("expense")}
+            className={`flex-1 text-center py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 ${
+              activeTab === "expense" 
+                ? "bg-slate-800 text-red-400 shadow-md border border-white/5" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            My Expenses ({expenses.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("income")}
+            className={`flex-1 text-center py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 ${
+              activeTab === "income" 
+                ? "bg-slate-800 text-green-400 shadow-md border border-white/5" 
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            My Income ({groupedIncomeArray.length})
+          </button>
         </section>
 
-        {/* Chart Section */}
-        <section className="py-6">
-          <h3 className="text-2xl font-bold mb-4">Stats</h3>
-          <div className="w-1/2 mx-auto">
-            <Doughnut
-              data={{
-                labels: expenseLabels,
-                datasets: [
-                  {
-                    label: "Expenses",
-                    data: expenseTotals,
-                    backgroundColor: expenseColors,
-                    borderColor: ["#18181b"],
-                    borderWidth: 5,
-                  },
-                ],
-              }}
-            />
-          </div>
-        </section>
+        {/* KONTEN KONDISIONAL BERDASARKAN TAB */}
+        {activeTab === "expense" ? (
+          <>
+            <section className="py-4">
+              <h3 className="text-2xl font-bold mb-4 text-slate-100">My Expenses</h3>
+              <div className="flex flex-col gap-4">
+                {expenses.map((expense) => (
+                  <ExpenseCategoryItem key={expense.id} expense={expense} />
+                ))}
+              </div>
+            </section>
+
+            <section className="py-6 border-t border-slate-800 mt-6">
+              <h3 className="text-2xl font-bold mb-4 text-slate-100">Stats Expenses</h3>
+              <div className="w-1/2 mx-auto">
+                <Doughnut
+                  data={{
+                    labels: expenseLabels,
+                    datasets: [
+                      {
+                        label: "Expenses",
+                        data: expenseTotals,
+                        backgroundColor: expenseColors,
+                        borderColor: ["#18181b"],
+                        borderWidth: 5,
+                      },
+                    ],
+                  }}
+                />
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            {/* TAMPILAN KATEGORI INCOME BERGAYA SAMA SEPERTI EXPENSE */}
+            <section className="py-4">
+              <h3 className="text-2xl font-bold mb-4 text-slate-100">My Income</h3>
+              {groupedIncomeArray.length === 0 ? (
+                <p className="text-slate-400 text-sm italic">Belum ada kategori pemasukan.</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {groupedIncomeArray.map((incGroup) => (
+                    <button 
+                      key={incGroup.title} 
+                      className="w-full text-left block focus:outline-none"
+                    >
+                      <div className="flex items-center justify-between px-4 py-4 bg-slate-800/60 border border-slate-700/40 rounded-2xl transition-all hover:bg-slate-700/50">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-4 h-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: incGroup.color }}
+                          />
+                          <h4 className="capitalize text-sm font-semibold text-slate-200">
+                            {incGroup.title}
+                          </h4>
+                        </div>
+                        <p className="text-sm font-bold text-green-400">
+                          {currencyFormatter(incGroup.total)}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Chart Section Ter-update Sesuai Kategori Pemasukan */}
+            <section className="py-6 border-t border-slate-800 mt-6">
+              <h3 className="text-2xl font-bold mb-4 text-slate-100">Stats Income</h3>
+              <div className="w-1/2 mx-auto">
+                {groupedIncomeArray.length === 0 ? (
+                  <p className="text-slate-500 text-center text-sm">Tidak ada data untuk grafik.</p>
+                ) : (
+                  <Doughnut
+                    data={{
+                      labels: incomeLabels,
+                      datasets: [
+                        {
+                          label: "Income",
+                          data: incomeTotals,
+                          backgroundColor: incomeColors,
+                          borderColor: ["#18181b"],
+                          borderWidth: 5,
+                        },
+                      ],
+                    }}
+                  />
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </main>
     </>
   );

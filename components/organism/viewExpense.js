@@ -17,7 +17,7 @@ function ViewExpenseModal({ show, onClose, expense }) {
   const deleteExpenseHandler = async () => {
     try {
       await deleteExpenseCategory(expense.id);
-      toast.success("kategori expense berhasil dihapus");
+      toast.success("Kategori expense berhasil dihapus");
     } catch (error) {
       console.log(error.message);
       toast.error(error.message);
@@ -35,14 +35,14 @@ function ViewExpenseModal({ show, onClose, expense }) {
       };
 
       await deleteExpenseItem(updatedExpense, expense.id);
-      toast.success("data expense berhasil dihapus");
+      toast.success("Item pengeluaran berhasil dihapus");
     } catch (error) {
       console.log(error.message);
       toast.error(error.message);
     }
   };
 
-  // FUNGSI UNTUK MENYIMPAN DESKRIPSI YANG DI-EDIT
+  // Fungsi untuk meng-update deskripsi item pengeluaran
   const updateExpenseDescriptionHandler = async (item) => {
     if (!editDescriptionValue.trim()) {
       toast.warning("Deskripsi tidak boleh kosong");
@@ -50,7 +50,6 @@ function ViewExpenseModal({ show, onClose, expense }) {
     }
 
     try {
-      // Map item di dalam list untuk mengganti deskripsi pada item yang sesuai
       const updatedItems = expense.items.map((i) => {
         if (i.id === item.id) {
           return { ...i, description: editDescriptionValue };
@@ -60,14 +59,12 @@ function ViewExpenseModal({ show, onClose, expense }) {
 
       const updatedExpense = {
         ...expense,
-        items: [...updatedItems], // total tetap sama karena tidak ada perubahan nominal uang
+        items: updatedItems,
       };
 
-      // Memanfaatkan fungsi context untuk menimpa data lama dengan data array items baru
       await deleteExpenseItem(updatedExpense, expense.id);
-      
       toast.success("Deskripsi pengeluaran berhasil diperbarui");
-      setEditingItemId(null); // Keluar dari mode edit
+      setEditingItemId(null);
     } catch (error) {
       console.log(error.message);
       toast.error(error.message);
@@ -77,26 +74,27 @@ function ViewExpenseModal({ show, onClose, expense }) {
   return (
     <Modal show={show} onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h2 className="text-4xl capitalize">{expense.title}</h2>
-        <button onClick={deleteExpenseHandler} className="btn btn-danger">
-          Delete
+        <h2 className="text-4xl capitalize text-slate-100">{expense.title}</h2>
+        <button className="btn btn-danger" onClick={deleteExpenseHandler}>
+          Delete Cat
         </button>
       </div>
 
       <div className="mt-6">
-        <h3 className="my-4 text-2xl border-b border-slate-700 pb-2">Expense History</h3>
-        
+        <h3 className="my-4 text-2xl border-b border-slate-700 pb-2 text-slate-100">Expense History</h3>
+
         <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1">
           {expense.items.map((item) => {
             const isEditing = editingItemId === item.id;
 
             return (
-              <div key={item.id} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-700/50">
-                
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-slate-700/50"
+              >
                 {/* SISI KIRI: Deskripsi & Tanggal */}
                 <div className="flex flex-col gap-1 min-w-0 flex-1">
                   {isEditing ? (
-                    /* JIKA SEDANG DI-EDIT: Tampilkan Input Field */
                     <div className="flex items-center gap-2 w-full pr-4">
                       <input
                         type="text"
@@ -113,50 +111,54 @@ function ViewExpenseModal({ show, onClose, expense }) {
                       <button
                         onClick={() => updateExpenseDescriptionHandler(item)}
                         className="text-lime-400 hover:text-lime-300 p-1 bg-slate-900 rounded-md border border-slate-700 h-8 w-8 flex items-center justify-center flex-shrink-0"
-                        title="Simpan"
                       >
                         <FaCheck size={12} />
                       </button>
                       <button
                         onClick={() => setEditingItemId(null)}
                         className="text-red-400 hover:text-red-300 p-1 bg-slate-900 rounded-md border border-slate-700 h-8 w-8 flex items-center justify-center flex-shrink-0"
-                        title="Batal"
                       >
                         <FaTimes size={12} />
                       </button>
                     </div>
                   ) : (
-                    /* JIKA NORMAL: Tampilkan Teks Deskripsi Biasa */
-                    <div className="flex items-center gap-2 group cursor-pointer" 
-                         onClick={() => {
-                           setEditingItemId(item.id);
-                           setEditDescriptionValue(item.description || "");
-                         }}>
+                    <div
+                      className="flex items-center gap-2 group cursor-pointer"
+                      onClick={() => {
+                        setEditingItemId(item.id);
+                        setEditDescriptionValue(item.description || "");
+                      }}
+                    >
+                      {/* Format font disamakan menjadi font-medium, text-slate-100, dan text-base */}
                       <p className="font-medium text-slate-100 capitalize truncate text-base hover:text-lime-400 transition-colors">
-                        {item.description || "No Description"} 
+                        {item.description || "No Description"}
                       </p>
-                      <FaPencilAlt size={11} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <FaPencilAlt
+                        size={11}
+                        className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      />
                     </div>
                   )}
 
                   <small className="text-xs text-slate-400">
-                    {(item.CreatedAt?.toMillis 
-                      ? new Date(item.CreatedAt.toMillis()) 
+                    {(item.CreatedAt?.toMillis
+                      ? new Date(item.CreatedAt.toMillis())
                       : new Date(item.CreatedAt)
-                    ).toLocaleString('id-ID', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
+                    ).toLocaleString("id-ID", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
                     })}
                   </small>
                 </div>
 
                 {/* SISI KANAN: Jumlah Nominal & Tombol Trash */}
                 <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+                  {/* Format font disesuaikan menjadi font-semibold dan text-slate-200 */}
                   <span className="font-semibold text-slate-200">
                     {currencyFormatter(item.amount)}
                   </span>
@@ -171,11 +173,10 @@ function ViewExpenseModal({ show, onClose, expense }) {
                     </button>
                   )}
                 </div>
-
               </div>
             );
           })}
-          
+
           {expense.items.length === 0 && (
             <p className="text-sm text-slate-400 text-center py-4">Belum ada history pengeluaran.</p>
           )}
