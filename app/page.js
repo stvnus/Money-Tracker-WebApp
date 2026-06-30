@@ -63,19 +63,53 @@ export default function Home() {
     setAvailableYears(Array.from(years).sort((a, b) => b - a));
   }, [expenses, income]);
 
+  // ==========================================
+  // LOGIKA FILTER REALTIME UNTUK DASHBOARD
+  // ==========================================
+
+  // 1. Filter Data Income Realtime
+  const filteredIncomeDashboard = income.filter((inc) => {
+    const incDate = parseDate(inc.CreatedAt);
+    const matchMonth = selectedMonth === "all" || incDate.getMonth() === parseInt(selectedMonth);
+    const matchYear = selectedYear === "all" || incDate.getFullYear().toString() === selectedYear;
+    return matchMonth && matchYear;
+  });
+
+  // 2. Filter Data Expenses Realtime (Recalculate total per category)
+  const filteredExpensesDashboard = expenses.map((category) => {
+    // Filter item di dalam kategori ini
+    const filteredItems = category.items.filter((item) => {
+      const itemDate = parseDate(item.CreatedAt);
+      const matchMonth = selectedMonth === "all" || itemDate.getMonth() === parseInt(selectedMonth);
+      const matchYear = selectedYear === "all" || itemDate.getFullYear().toString() === selectedYear;
+      return matchMonth && matchYear;
+    });
+
+    // Hitung ulang total pengeluaran untuk kategori ini pada periode terpilih
+    const newTotal = filteredItems.reduce((sum, item) => sum + item.amount, 0);
+
+    return {
+      ...category,
+      items: filteredItems,
+      total: newTotal
+    };
+  }).filter(category => category.items.length > 0); // Hanya tampilkan kategori yang ada transaksinya di periode ini
+
+  // Saldo dihitung berdasarkan data yang sudah terfilter agar Dashboard mencerminkan periode tersebut
   useEffect(() => {
-    const newBalance =
-      income.reduce((total, i) => total + i.amount, 0) -
-      expenses.reduce((total, e) => total + e.total, 0);
+    const totalIncome = filteredIncomeDashboard.reduce((total, i) => total + i.amount, 0);
+    const totalExpense = filteredExpensesDashboard.reduce((total, e) => total + e.total, 0);
+    const newBalance = totalIncome - totalExpense;
 
     setBalance(newBalance);
 
-    if (newBalance === 0) {
+    if (newBalance === 0 && filteredIncomeDashboard.length === 0) {
       setShowZeroBalanceNotification(true);
     } else {
       setShowZeroBalanceNotification(false);
     }
-  }, [expenses, income]);
+  }, [selectedMonth, selectedYear, expenses, income]);
+
 
   // DOWNLOAD PDF REPORT WITH TOTALS
   const downloadPDFReport = () => {
@@ -108,18 +142,11 @@ export default function Home() {
     doc.setFont("helvetica", "bold");
     doc.text(`TOTAL SALDO KESELURUHAN: ${currencyFormatter(balance)}`, 14, 50);
 
-    const filteredIncome = income.filter((inc) => {
-      const incDate = parseDate(inc.CreatedAt);
-      const matchMonth = selectedMonth === "all" || incDate.getMonth() === parseInt(selectedMonth);
-      const matchYear = selectedYear === "all" || incDate.getFullYear().toString() === selectedYear;
-      return matchMonth && matchYear;
-    });
-
-    const totalPeriodIncome = filteredIncome.reduce((sum, item) => sum + item.amount, 0);
+    const totalPeriodIncome = filteredIncomeDashboard.reduce((sum, item) => sum + item.amount, 0);
 
     doc.text("A. Riwayat Pemasukan (Income)", 14, 62);
     
-    const incomeRows = filteredIncome.map((inc, index) => [
+    const incomeRows = filteredIncomeDashboard.map((inc, index) => [
       index + 1,
       inc.description || "Tanpa Deskripsi",
       parseDate(inc.CreatedAt).toLocaleString('id-ID'),
@@ -151,22 +178,16 @@ export default function Home() {
     let no = 1;
     let totalPeriodExpense = 0;
 
-    expenses.forEach((category) => {
+    filteredExpensesDashboard.forEach((category) => {
       category.items.forEach((item) => {
-        const itemDate = parseDate(item.CreatedAt);
-        const matchMonth = selectedMonth === "all" || itemDate.getMonth() === parseInt(selectedMonth);
-        const matchYear = selectedYear === "all" || itemDate.getFullYear().toString() === selectedYear;
-        
-        if (matchMonth && matchYear) {
-          totalPeriodExpense += item.amount;
-          expenseRows.push([
-            no++,
-            category.title,
-            item.description || "Tanpa Deskripsi",
-            itemDate.toLocaleString('id-ID'),
-            currencyFormatter(item.amount)
-          ]);
-        }
+        totalPeriodExpense += item.amount;
+        expenseRows.push([
+          no++,
+          category.title,
+          item.description || "Tanpa Deskripsi",
+          parseDate(item.CreatedAt).toLocaleString('id-ID'),
+          currencyFormatter(item.amount)
+        ]);
       });
     });
 
@@ -216,8 +237,8 @@ export default function Home() {
     return <SignIn />;
   }
 
-  // LOGIKA GROUPING UNTUK INCOME BERDASARKAN KATEGORI
-  const groupedIncomeMap = income.reduce((groups, item) => {
+  // LOGIKA GROUPING UNTUK INCOME BERDASARKAN KATEGORI (Menggunakan data terfilter)
+  const groupedIncomeMap = filteredIncomeDashboard.reduce((groups, item) => {
     const categoryTitle = item.category || "Uncategorized";
     const categoryColor = item.categoryColor || "#64748b";
     
@@ -236,15 +257,15 @@ export default function Home() {
 
   const groupedIncomeArray = Object.values(groupedIncomeMap);
 
-  // DATA GRAFIK DOUGHNUT UNTUK EXPENSE
-  const expenseLabels = expenses.map((expense) => expense.title);
-  const expenseTotals = expenses.map((expense) => expense.total);
-  const expenseColors = expenses.map((expense) => expense.color);
+  // DATA GRAFIK DOUGHNUT UNTUK EXPENSE (Menggunakan data terfilter)
+  const expenseLabels = filteredExpensesDashboard.map((expense) => expense.title);
+  const expenseTotals = filteredExpensesDashboard.map((expense) => expense.total);
+  const expenseColors = filteredExpensesDashboard.map((expense) => expense.color);
 
-  if (balance >= 0) {
+  if (balance > 0) {
     expenseLabels.push("Sisa Saldo");
     expenseTotals.push(balance);
-    expenseColors.push("#00ff00");
+    expenseColors.push("#22c55e");
   }
 
   // DATA GRAFIK DOUGHNUT UNTUK INCOME
@@ -263,7 +284,7 @@ export default function Home() {
         <section className="py-6 px-4 mb-4 bg-slate-800/50 rounded-2xl border border-white/10 shadow-xl backdrop-blur-sm flex flex-col items-center justify-center text-center">
           <div className="flex flex-col gap-1 items-center">
             <small className="text-slate-400 text-sm font-medium tracking-wide uppercase">
-              Saldo Saat Ini
+              Saldo Periode Ini
             </small>
             <h2 className="text-4xl font-bold text-white tracking-tight mt-1">
               {currencyFormatter(balance)}
@@ -273,7 +294,7 @@ export default function Home() {
           {showZeroBalanceNotification && (
             <div className="mt-3 flex items-center justify-center gap-2 py-1.5 px-3 bg-amber-500/10 border border-amber-500/20 rounded-xl max-w-sm mx-auto">
               <p className="text-amber-200/90 text-xs font-medium">
-                Input saldo pemasukan terlebih dahulu
+                Belum ada transaksi pemasukan pada periode ini
               </p>
             </div>
           )}
@@ -301,7 +322,7 @@ export default function Home() {
         <section className="mb-6 p-4 bg-slate-800/30 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 text-slate-300 text-sm font-medium">
             <Calendar size={16} className="text-lime-500" />
-            <span>Unduh Laporan per Periode:</span>
+            <span>Periode Dashboard:</span>
           </div>
           
           <div className="flex items-center gap-2">
@@ -356,7 +377,7 @@ export default function Home() {
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            My Expenses ({expenses.length})
+            My Expenses ({filteredExpensesDashboard.length})
           </button>
           <button
             onClick={() => setActiveTab("income")}
@@ -375,40 +396,47 @@ export default function Home() {
           <>
             <section className="py-4">
               <h3 className="text-2xl font-bold mb-4 text-slate-100">My Expenses</h3>
-              <div className="flex flex-col gap-4">
-                {expenses.map((expense) => (
-                  <ExpenseCategoryItem key={expense.id} expense={expense} />
-                ))}
-              </div>
+              {filteredExpensesDashboard.length === 0 ? (
+                <p className="text-slate-400 text-sm italic text-center py-4">Tidak ada data pengeluaran pada periode ini.</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {filteredExpensesDashboard.map((expense) => (
+                    <ExpenseCategoryItem key={expense.id} expense={expense} />
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="py-6 border-t border-slate-800 mt-6">
               <h3 className="text-2xl font-bold mb-4 text-slate-100">Stats Expenses</h3>
               <div className="w-1/2 mx-auto">
-                <Doughnut
-                  data={{
-                    labels: expenseLabels,
-                    datasets: [
-                      {
-                        label: "Expenses",
-                        data: expenseTotals,
-                        backgroundColor: expenseColors,
-                        borderColor: ["#18181b"],
-                        borderWidth: 5,
-                      },
-                    ],
-                  }}
-                />
+                {filteredExpensesDashboard.length === 0 ? (
+                  <p className="text-slate-500 text-center text-sm">Tidak ada data untuk grafik.</p>
+                ) : (
+                  <Doughnut
+                    data={{
+                      labels: expenseLabels,
+                      datasets: [
+                        {
+                          label: "Expenses",
+                          data: expenseTotals,
+                          backgroundColor: expenseColors,
+                          borderColor: ["#18181b"],
+                          borderWidth: 5,
+                        },
+                      ],
+                    }}
+                  />
+                )}
               </div>
             </section>
           </>
         ) : (
           <>
-            {/* TAMPILAN KATEGORI INCOME BERGAYA SAMA SEPERTI EXPENSE */}
             <section className="py-4">
               <h3 className="text-2xl font-bold mb-4 text-slate-100">My Income</h3>
               {groupedIncomeArray.length === 0 ? (
-                <p className="text-slate-400 text-sm italic">Belum ada kategori pemasukan.</p>
+                <p className="text-slate-400 text-sm italic text-center py-4">Tidak ada data pemasukan pada periode ini.</p>
               ) : (
                 <div className="flex flex-col gap-4">
                   {groupedIncomeArray.map((incGroup) => (
@@ -436,7 +464,6 @@ export default function Home() {
               )}
             </section>
 
-            {/* Chart Section Ter-update Sesuai Kategori Pemasukan */}
             <section className="py-6 border-t border-slate-800 mt-6">
               <h3 className="text-2xl font-bold mb-4 text-slate-100">Stats Income</h3>
               <div className="w-1/2 mx-auto">
