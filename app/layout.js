@@ -2,16 +2,11 @@
 
 import "./globals.css";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"
-
-import Nav from "@/components/molecules/nav";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import FinanceContextProvider from "@/library/store/financeContext";
 import AuthContextProvider from "@/library/store/authContext";
-
-
-
 
 export default function RootLayout({ children }) {
   return (
@@ -21,13 +16,13 @@ export default function RootLayout({ children }) {
         head.js. Find out more at https://beta.nextjs.org/docs/api-reference/file-conventions/head
       */}
       <head />
-      <body>
+      <body style={{ backgroundColor: "#0f1422" }}>
         <AuthContextProvider>
-        <FinanceContextProvider>
-          <ToastContainer/>
-          <Nav />
-          {children}
-        </FinanceContextProvider>
+          <FinanceContextProvider>
+            <ToastContainer />
+            {/* Komponen <Nav /> telah dihapus dari sini agar tidak muncul di halaman Sign In */}
+            {children}
+          </FinanceContextProvider>
         </AuthContextProvider>
       </body>
     </html>

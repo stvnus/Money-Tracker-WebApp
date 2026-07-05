@@ -6,6 +6,7 @@ import { authContext } from "@/library/store/authContext";
 import { currencyFormatter } from "@/library/utils";
 
 import ExpenseCategoryItem from "@/components/organism/categoryExpense";
+import Nav from "@/components/molecules/nav"; // IMPORT NAV KE SINI
 
 import AddIncomeModal from "@/components/organism/incomeModal";
 import AddExpensesModal from "@/components/organism/expenseModal";
@@ -31,8 +32,8 @@ export default function Home() {
   // STATE FILTER TAB (expense atau income)
   const [activeTab, setActiveTab] = useState("expense");
 
-  // STATE FILTER (Default tahun sekarang, bulan semua)
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  // STATE FILTER (Default otomatis mengikuti bulan dan tahun saat ini)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth().toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [availableYears, setAvailableYears] = useState([new Date().getFullYear().toString()]);
 
@@ -77,7 +78,6 @@ export default function Home() {
 
   // 2. Filter Data Expenses Realtime (Recalculate total per category)
   const filteredExpensesDashboard = expenses.map((category) => {
-    // Filter item di dalam kategori ini
     const filteredItems = category.items.filter((item) => {
       const itemDate = parseDate(item.CreatedAt);
       const matchMonth = selectedMonth === "all" || itemDate.getMonth() === parseInt(selectedMonth);
@@ -85,7 +85,6 @@ export default function Home() {
       return matchMonth && matchYear;
     });
 
-    // Hitung ulang total pengeluaran untuk kategori ini pada periode terpilih
     const newTotal = filteredItems.reduce((sum, item) => sum + item.amount, 0);
 
     return {
@@ -93,7 +92,7 @@ export default function Home() {
       items: filteredItems,
       total: newTotal
     };
-  }).filter(category => category.items.length > 0); // Hanya tampilkan kategori yang ada transaksinya di periode ini
+  }).filter(category => category.items.length > 0);
 
   // Saldo dihitung berdasarkan data yang sudah terfilter agar Dashboard mencerminkan periode tersebut
   useEffect(() => {
@@ -109,7 +108,6 @@ export default function Home() {
       setShowZeroBalanceNotification(false);
     }
   }, [selectedMonth, selectedYear, expenses, income]);
-
 
   // DOWNLOAD PDF REPORT WITH TOTALS
   const downloadPDFReport = () => {
@@ -233,6 +231,7 @@ export default function Home() {
     doc.save(`Laporan_${fileMonthName}_${fileYearName}.pdf`);
   };
 
+  // Jika user belum login, tampilkan halaman Sign In saja (Navbar tidak ikut ter-render)
   if (!user) {
     return <SignIn />;
   }
@@ -277,6 +276,9 @@ export default function Home() {
     <>
       <AddIncomeModal show={showAddIncomeModal} onClose={setShowAddIncomeModal} />
       <AddExpensesModal show={showAddExpenseModal} onClose={setShowAddExpenseModal} />
+
+      {/* Komponen Nav ditaruh di sini agar hanya muncul di halaman dashboard */}
+      <Nav />
 
       <main className="container max-w-2xl px-6 mx-auto mb-12">
         
