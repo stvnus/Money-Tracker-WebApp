@@ -4,9 +4,7 @@ import { FcGoogle } from "react-icons/fc";
 import { 
   TrendingUp, 
   PieChart, 
-  Shield, 
   Lock, 
-  DollarSign,
   ArrowUpRight,
   Sparkles,
   Wallet,
@@ -44,10 +42,14 @@ function SignIn() {
         {/* BAGIAN KIRI: BRANDING & FITUR */}
         <div className="flex flex-col justify-center space-y-10 lg:col-span-7">
           
-          {/* LOGO */}
+          {/* LOGO DENGAN GAMBAR CUSTOM */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-2xl shadow-lg shadow-emerald-500/5">
-              <DollarSign size={24} />
+            <div className="w-20 h-20 rounded-full border border-white/10 flex items-center justify-center shadow-lg overflow-hidden bg-slate-800">
+              <img 
+                src="/a1.jpg" 
+                alt="YooMoney Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-black text-white tracking-wider leading-none">YooMoney</h2>
@@ -90,7 +92,6 @@ function SignIn() {
               </div>
             </div>
 
-
           </div>
         </div>
 
@@ -115,8 +116,6 @@ function SignIn() {
           </button>
         </div>
       </main>
-
-
       
     </div>
   );
