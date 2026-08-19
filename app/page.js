@@ -114,7 +114,7 @@ export default function Home() {
   // Pengelompokan Income berdasarkan Kategori
   const groupedIncomeMap = filteredIncomeDashboard.reduce((groups, item) => {
     const categoryTitle = item.category || "Uncategorized";
-    const categoryColor = item.categoryColor || "#64748b";
+    const categoryColor = item.categoryColor || "#10b981"; // Fallback warna hijau emerald
     
     if (!groups[categoryTitle]) {
       groups[categoryTitle] = {
@@ -131,13 +131,26 @@ export default function Home() {
 
   const groupedIncomeArray = Object.values(groupedIncomeMap);
 
-  // Data Konfigurasi Grafik berdasarkan Kategori Pengeluaran
-  const categoryChartData = {
+  // Konfigurasi Data Grafik Pengeluaran (Expense)
+  const expenseChartData = {
     labels: filteredExpensesDashboard.map((cat) => cat.title),
     datasets: [
       {
         data: filteredExpensesDashboard.map((cat) => cat.total),
-        backgroundColor: filteredExpensesDashboard.map((cat) => cat.color || "#3b82f6"),
+        backgroundColor: filteredExpensesDashboard.map((cat) => cat.color || "#f43f5e"),
+        borderColor: "#0f172a",
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // Konfigurasi Data Grafik Pemasukan (Income)
+  const incomeChartData = {
+    labels: groupedIncomeArray.map((inc) => inc.title),
+    datasets: [
+      {
+        data: groupedIncomeArray.map((inc) => inc.total),
+        backgroundColor: groupedIncomeArray.map((inc) => inc.color || "#10b981"),
         borderColor: "#0f172a",
         borderWidth: 2,
       },
@@ -239,53 +252,53 @@ export default function Home() {
               <span>Periode:</span>
             </div>
 
-          <div className="flex items-center gap-2">
-  {/* SELECT TAHUN */}
-  <select
-    value={selectedYear}
-    onChange={(e) => setSelectedYear(e.target.value)}
-    className="bg-slate-900 text-slate-100 text-xs sm:text-sm border border-slate-700/80 rounded-lg py-1.5 px-3 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 cursor-pointer shadow-sm transition-colors"
-  >
-    <option value="all" className="bg-slate-900 text-slate-100">
-      Semua Tahun
-    </option>
-    {availableYears.map((year) => (
-      <option key={year} value={year} className="bg-slate-900 text-slate-100">
-        {year}
-      </option>
-    ))}
-  </select>
+            <div className="flex items-center gap-2">
+              {/* SELECT TAHUN */}
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-slate-900 text-slate-100 text-xs sm:text-sm border border-slate-700/80 rounded-lg py-1.5 px-3 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 cursor-pointer shadow-sm transition-colors"
+              >
+                <option value="all" className="bg-slate-900 text-slate-100">
+                  Semua Tahun
+                </option>
+                {availableYears.map((year) => (
+                  <option key={year} value={year} className="bg-slate-900 text-slate-100">
+                    {year}
+                  </option>
+                ))}
+              </select>
 
-  {/* SELECT BULAN */}
-  <select
-    value={selectedMonth}
-    onChange={(e) => setSelectedMonth(e.target.value)}
-    className="bg-slate-900 text-slate-100 text-xs sm:text-sm border border-slate-700/80 rounded-lg py-1.5 px-3 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 cursor-pointer shadow-sm transition-colors"
-  >
-    <option value="all" className="bg-slate-900 text-slate-100">Semua Bulan</option>
-    <option value="0" className="bg-slate-900 text-slate-100">Januari</option>
-    <option value="1" className="bg-slate-900 text-slate-100">Februari</option>
-    <option value="2" className="bg-slate-900 text-slate-100">Maret</option>
-    <option value="3" className="bg-slate-900 text-slate-100">April</option>
-    <option value="4" className="bg-slate-900 text-slate-100">Mei</option>
-    <option value="5" className="bg-slate-900 text-slate-100">Juni</option>
-    <option value="6" className="bg-slate-900 text-slate-100">Juli</option>
-    <option value="7" className="bg-slate-900 text-slate-100">Agustus</option>
-    <option value="8" className="bg-slate-900 text-slate-100">September</option>
-    <option value="9" className="bg-slate-900 text-slate-100">Oktober</option>
-    <option value="10" className="bg-slate-900 text-slate-100">November</option>
-    <option value="11" className="bg-slate-900 text-slate-100">Desember</option>
-  </select>
+              {/* SELECT BULAN */}
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-slate-900 text-slate-100 text-xs sm:text-sm border border-slate-700/80 rounded-lg py-1.5 px-3 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 cursor-pointer shadow-sm transition-colors"
+              >
+                <option value="all" className="bg-slate-900 text-slate-100">Semua Bulan</option>
+                <option value="0" className="bg-slate-900 text-slate-100">Januari</option>
+                <option value="1" className="bg-slate-900 text-slate-100">Februari</option>
+                <option value="2" className="bg-slate-900 text-slate-100">Maret</option>
+                <option value="3" className="bg-slate-900 text-slate-100">April</option>
+                <option value="4" className="bg-slate-900 text-slate-100">Mei</option>
+                <option value="5" className="bg-slate-900 text-slate-100">Juni</option>
+                <option value="6" className="bg-slate-900 text-slate-100">Juli</option>
+                <option value="7" className="bg-slate-900 text-slate-100">Agustus</option>
+                <option value="8" className="bg-slate-900 text-slate-100">September</option>
+                <option value="9" className="bg-slate-900 text-slate-100">Oktober</option>
+                <option value="10" className="bg-slate-900 text-slate-100">November</option>
+                <option value="11" className="bg-slate-900 text-slate-100">Desember</option>
+              </select>
 
-  {/* TOMBOL UNDUH PDF */}
-  <button
-    onClick={downloadPDFHandler}
-    className="p-2 bg-lime-500 hover:bg-lime-400 text-slate-950 rounded-lg transition-colors flex items-center justify-center ml-1 font-semibold"
-    title="Download PDF"
-  >
-    <Download size={16} />
-  </button>
-</div>
+              {/* TOMBOL UNDUH PDF */}
+              <button
+                onClick={downloadPDFHandler}
+                className="p-2 bg-lime-500 hover:bg-lime-400 text-slate-950 rounded-lg transition-colors flex items-center justify-center ml-1 font-semibold"
+                title="Download PDF"
+              >
+                <Download size={16} />
+              </button>
+            </div>
           </div>
 
           {/* BARIS 3: RIWAYAT TRANSAKSI MENYATU SEAMLESS */}
@@ -353,21 +366,37 @@ export default function Home() {
           </section>
         )}
 
-        {/* GRAFIK STATISTIK BERDASARKAN KATEGORI PENGELUARAN */}
+        {/* GRAFIK STATISTIK DINAMIS BERDASARKAN TAB AKTIF */}
         <section className="mt-8 p-6 bg-slate-900/60 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800">
-            <PieIcon size={18} className="text-lime-400" />
-            <h3 className="text-lg font-bold text-slate-100">Statistik Pengeluaran Berdasarkan Kategori</h3>
+            <PieIcon size={18} className={activeTab === "expense" ? "text-rose-400" : "text-emerald-400"} />
+            <h3 className="text-lg font-bold text-slate-100">
+              {activeTab === "expense" 
+                ? "Statistik Pengeluaran Berdasarkan Kategori" 
+                : "Statistik Pemasukan Berdasarkan Kategori"}
+            </h3>
           </div>
 
-          {filteredExpensesDashboard.length === 0 ? (
-            <p className="text-slate-400 text-sm italic text-center py-8">
-              Belum ada data pengeluaran kategori pada periode ini.
-            </p>
+          {activeTab === "expense" ? (
+            filteredExpensesDashboard.length === 0 ? (
+              <p className="text-slate-400 text-sm italic text-center py-8">
+                Belum ada data pengeluaran kategori pada periode ini.
+              </p>
+            ) : (
+              <div className="w-full h-64 sm:h-72 flex justify-center items-center">
+                <Doughnut data={expenseChartData} options={chartOptions} />
+              </div>
+            )
           ) : (
-            <div className="w-full h-64 sm:h-72 flex justify-center items-center">
-              <Doughnut data={categoryChartData} options={chartOptions} />
-            </div>
+            groupedIncomeArray.length === 0 ? (
+              <p className="text-slate-400 text-sm italic text-center py-8">
+                Belum ada data pemasukan kategori pada periode ini.
+              </p>
+            ) : (
+              <div className="w-full h-64 sm:h-72 flex justify-center items-center">
+                <Doughnut data={incomeChartData} options={chartOptions} />
+              </div>
+            )
           )}
         </section>
 
