@@ -25,8 +25,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function Home() {
   const [showAddIncomeModal, setShowAddIncomeModal] = useState(false);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
-  const [showZeroBalanceNotification, setShowZeroBalanceNotification] = useState(false);
-  
+
   const [balance, setBalance] = useState(0);
   const [activeTab, setActiveTab] = useState("expense");
 
@@ -34,7 +33,7 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [availableYears, setAvailableYears] = useState([new Date().getFullYear().toString()]);
 
-  const { expenses, income } = useContext(financeContext);
+  const { expenses = [], income = [] } = useContext(financeContext);
   const { user } = useContext(authContext);
 
   const parseDate = (dateField) => {
@@ -50,8 +49,9 @@ export default function Home() {
       years.add(parseDate(inc.CreatedAt).getFullYear().toString());
     });
     
-    expenses.forEach((cat) => {
-      cat.items.forEach((item) => {
+    (expenses || []).forEach((cat) => {
+      const itemsList = Array.isArray(cat?.items) ? cat.items : [];
+      itemsList.forEach((item) => {
         years.add(parseDate(item.CreatedAt).getFullYear().toString());
       });
     });
@@ -67,16 +67,20 @@ export default function Home() {
     return matchMonth && matchYear;
   });
 
-  // Filter Data Expenses berdasarkan Periode
-  const filteredExpensesDashboard = expenses.map((category) => {
-    const filteredItems = category.items.filter((item) => {
+  // Filter Data Expenses berdasarkan Periode (PERBAIKAN UTAMA SAFE-GUARD)
+  const filteredExpensesDashboard = (expenses || []).map((category) => {
+    // Memastikan category.items bertipe Array agar tidak mengembalikan error '.filter of undefined'
+    const categoryItems = Array.isArray(category?.items) ? category.items : [];
+
+    const filteredItems = categoryItems.filter((item) => {
+      if (!item) return false;
       const itemDate = parseDate(item.CreatedAt);
       const matchMonth = selectedMonth === "all" || itemDate.getMonth() === parseInt(selectedMonth);
       const matchYear = selectedYear === "all" || itemDate.getFullYear().toString() === selectedYear;
       return matchMonth && matchYear;
     });
 
-    const newTotal = filteredItems.reduce((sum, item) => sum + item.amount, 0);
+    const newTotal = filteredItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     return {
       ...category,
@@ -85,19 +89,13 @@ export default function Home() {
     };
   }).filter((category) => category.items.length > 0);
 
-  // Perhitungan total
-  const totalIncomeDashboard = filteredIncomeDashboard.reduce((total, i) => total + i.amount, 0);
+  // Perhitungan total Dashboard (Filter Periode)
+  const totalIncomeDashboard = filteredIncomeDashboard.reduce((total, i) => total + (Number(i.amount) || 0), 0);
   const totalExpenseDashboard = filteredExpensesDashboard.reduce((total, e) => total + e.total, 0);
 
   useEffect(() => {
     const newBalance = totalIncomeDashboard - totalExpenseDashboard;
     setBalance(newBalance);
-
-    if (newBalance === 0 && filteredIncomeDashboard.length === 0) {
-      setShowZeroBalanceNotification(true);
-    } else {
-      setShowZeroBalanceNotification(false);
-    }
   }, [selectedMonth, selectedYear, expenses, income, totalIncomeDashboard, totalExpenseDashboard]);
 
   // Download PDF Laporan
@@ -114,7 +112,7 @@ export default function Home() {
   // Pengelompokan Income berdasarkan Kategori
   const groupedIncomeMap = filteredIncomeDashboard.reduce((groups, item) => {
     const categoryTitle = item.category || "Uncategorized";
-    const categoryColor = item.categoryColor || "#10b981"; // Fallback warna hijau emerald
+    const categoryColor = item.categoryColor || "#10b981";
     
     if (!groups[categoryTitle]) {
       groups[categoryTitle] = {
@@ -124,14 +122,14 @@ export default function Home() {
         items: []
       };
     }
-    groups[categoryTitle].total += item.amount;
+    groups[categoryTitle].total += (Number(item.amount) || 0);
     groups[categoryTitle].items.push(item);
     return groups;
   }, {});
 
   const groupedIncomeArray = Object.values(groupedIncomeMap);
 
-  // Konfigurasi Data Grafik Pengeluaran (Expense)
+  // Data Grafik Pengeluaran (Expense)
   const expenseChartData = {
     labels: filteredExpensesDashboard.map((cat) => cat.title),
     datasets: [
@@ -144,7 +142,7 @@ export default function Home() {
     ],
   };
 
-  // Konfigurasi Data Grafik Pemasukan (Income)
+  // Data Grafik Pemasukan (Income)
   const incomeChartData = {
     labels: groupedIncomeArray.map((inc) => inc.title),
     datasets: [
@@ -157,26 +155,6 @@ export default function Home() {
     ],
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          color: "#94a3b8",
-          font: { size: 12 },
-          boxWidth: 12,
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => ` ${context.label}: ${currencyFormatter(context.raw)}`,
-        },
-      },
-    },
-  };
-
   return (
     <>
       <AddIncomeModal show={showAddIncomeModal} onClose={setShowAddIncomeModal} />
@@ -186,13 +164,12 @@ export default function Home() {
 
       <main className="container max-w-4xl px-4 sm:px-6 mx-auto mb-12">
         
-        {/* SINGLE CONTAINER DASHBOARD CARD */}
+        {/* DASHBOARD CARD CONTAINER */}
         <section className="p-5 mb-6 bg-slate-900/60 rounded-2xl border border-slate-800 shadow-2xl backdrop-blur-md flex flex-col gap-5">
+       
           
-          {/* BARIS 1: PROPORSI 60% : 40% (GRID 12 KOLOM) */}
+          {/* BARIS 1: SALDO & PEMASUKAN/PENGELUARAN */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch border-b border-slate-700/50 pb-5">
-
-            {/* SISI KIRI: SALDO PERIODE INI (60% / 7 KOLOM) */}
             <div className="md:col-span-7 flex flex-col justify-center h-full bg-slate-900/40 p-5 rounded-xl border border-slate-700/40">
               <small className="text-slate-400 text-xs font-semibold tracking-wider uppercase">
                 Saldo Periode Ini
@@ -202,10 +179,7 @@ export default function Home() {
               </h2>
             </div>
 
-            {/* SISI KANAN: PEMASUKAN & PENGELUARAN (40% / 5 KOLOM) */}
             <div className="md:col-span-5 flex flex-col gap-2.5 justify-center">
-              
-              {/* PEMASUKAN */}
               <div 
                 onClick={() => setShowAddIncomeModal(true)}
                 className="flex-1 flex items-center justify-between p-3 bg-slate-900/40 hover:bg-slate-800/50 rounded-xl border border-slate-700/40 cursor-pointer transition-all group"
@@ -223,7 +197,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* PENGELUARAN */}
               <div 
                 onClick={() => setShowAddExpenseModal(true)}
                 className="flex-1 flex items-center justify-between p-3 bg-slate-900/40 hover:bg-slate-800/50 rounded-xl border border-slate-700/40 cursor-pointer transition-all group"
@@ -240,11 +213,9 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
             </div>
-
           </div>
-
+     
           {/* BARIS 2: BAR PERIODE DASHBOARD */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-b border-slate-800 pb-4">
             <div className="flex items-center gap-2 text-slate-300 text-xs sm:text-sm font-medium">
@@ -253,23 +224,17 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* SELECT TAHUN */}
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
                 className="bg-slate-900 text-slate-100 text-xs sm:text-sm border border-slate-700/80 rounded-lg py-1.5 px-3 focus:outline-none focus:border-lime-400 focus:ring-1 focus:ring-lime-400 cursor-pointer shadow-sm transition-colors"
               >
-                <option value="all" className="bg-slate-900 text-slate-100">
-                  Semua Tahun
-                </option>
+                <option value="all" className="bg-slate-900 text-slate-100">Semua Tahun</option>
                 {availableYears.map((year) => (
-                  <option key={year} value={year} className="bg-slate-900 text-slate-100">
-                    {year}
-                  </option>
+                  <option key={year} value={year} className="bg-slate-900 text-slate-100">{year}</option>
                 ))}
               </select>
 
-              {/* SELECT BULAN */}
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -290,7 +255,6 @@ export default function Home() {
                 <option value="11" className="bg-slate-900 text-slate-100">Desember</option>
               </select>
 
-              {/* TOMBOL UNDUH PDF */}
               <button
                 onClick={downloadPDFHandler}
                 className="p-2 bg-lime-500 hover:bg-lime-400 text-slate-950 rounded-lg transition-colors flex items-center justify-center ml-1 font-semibold"
@@ -301,8 +265,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* BARIS 3: RIWAYAT TRANSAKSI MENYATU SEAMLESS */}
-          <div className="pt-2">
+          {/* BARIS 3: RIWAYAT TRANSAKSI */}
+          <div className="pt-2 border-b border-slate-800 pb-5">
             <RecentTransaction 
               income={income} 
               expenses={expenses} 
@@ -366,10 +330,10 @@ export default function Home() {
           </section>
         )}
 
-        {/* GRAFIK STATISTIK DINAMIS BERDASARKAN TAB AKTIF */}
-        <section className="mt-8 p-6 bg-slate-900/60 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800">
-            <PieIcon size={18} className={activeTab === "expense" ? "text-rose-400" : "text-emerald-400"} />
+        {/* GRAFIK STATISTIK DINAMIS */}
+        <section className="mt-8 p-6 bg-slate-900/80 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-800">
+            <PieIcon size={20} className={activeTab === "expense" ? "text-rose-400" : "text-emerald-400"} />
             <h3 className="text-lg font-bold text-slate-100">
               {activeTab === "expense" 
                 ? "Statistik Pengeluaran Berdasarkan Kategori" 
@@ -383,8 +347,65 @@ export default function Home() {
                 Belum ada data pengeluaran kategori pada periode ini.
               </p>
             ) : (
-              <div className="w-full h-64 sm:h-72 flex justify-center items-center">
-                <Doughnut data={expenseChartData} options={chartOptions} />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 h-56 sm:h-64 flex justify-center items-center">
+                  <Doughnut 
+                    data={expenseChartData} 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => ` ${context.label}: ${currencyFormatter(context.raw)}`,
+                          },
+                        },
+                      },
+                      cutout: "70%",
+                    }} 
+                  />
+                </div>
+
+                <div className="md:col-span-7 flex flex-col justify-center gap-3">
+                  <div className="flex flex-col gap-2.5">
+                    {filteredExpensesDashboard.map((cat) => {
+                      const percentage = totalExpenseDashboard > 0 
+                        ? ((cat.total / totalExpenseDashboard) * 100).toFixed(1) 
+                        : "0.0";
+                      
+                      return (
+                        <div 
+                          key={cat.id || cat.title} 
+                          className="flex items-center justify-between text-xs sm:text-sm py-1.5 border-b border-slate-800/60 last:border-none"
+                        >
+                          <div className="flex items-center gap-3 min-w-[120px] truncate">
+                            <span 
+                              className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+                              style={{ backgroundColor: cat.color || "#f43f5e" }} 
+                            />
+                            <span className="text-slate-200 font-medium truncate">{cat.title}</span>
+                          </div>
+
+                          <span className="text-slate-300 font-semibold px-2">
+                            {percentage}%
+                          </span>
+
+                          <span className="text-slate-300 font-medium text-right">
+                            {currencyFormatter(cat.total)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800 text-sm font-bold">
+                    <span className="text-slate-400">Total Pengeluaran</span>
+                    <span className="text-rose-400 text-base">
+                      {currencyFormatter(totalExpenseDashboard)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )
           ) : (
@@ -393,8 +414,65 @@ export default function Home() {
                 Belum ada data pemasukan kategori pada periode ini.
               </p>
             ) : (
-              <div className="w-full h-64 sm:h-72 flex justify-center items-center">
-                <Doughnut data={incomeChartData} options={chartOptions} />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-5 h-56 sm:h-64 flex justify-center items-center">
+                  <Doughnut 
+                    data={incomeChartData} 
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => ` ${context.label}: ${currencyFormatter(context.raw)}`,
+                          },
+                        },
+                      },
+                      cutout: "70%",
+                    }} 
+                  />
+                </div>
+
+                <div className="md:col-span-7 flex flex-col justify-center gap-3">
+                  <div className="flex flex-col gap-2.5">
+                    {groupedIncomeArray.map((inc) => {
+                      const percentage = totalIncomeDashboard > 0 
+                        ? ((inc.total / totalIncomeDashboard) * 100).toFixed(1) 
+                        : "0.0";
+                      
+                      return (
+                        <div 
+                          key={inc.title} 
+                          className="flex items-center justify-between text-xs sm:text-sm py-1.5 border-b border-slate-800/60 last:border-none"
+                        >
+                          <div className="flex items-center gap-3 min-w-[120px] truncate">
+                            <span 
+                              className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+                              style={{ backgroundColor: inc.color || "#10b981" }} 
+                            />
+                            <span className="text-slate-200 font-medium truncate">{inc.title}</span>
+                          </div>
+
+                          <span className="text-slate-300 font-semibold px-2">
+                            {percentage}%
+                          </span>
+
+                          <span className="text-slate-300 font-medium text-right">
+                            {currencyFormatter(inc.total)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800 text-sm font-bold">
+                    <span className="text-slate-400">Total Pemasukan</span>
+                    <span className="text-emerald-400 text-base">
+                      {currencyFormatter(totalIncomeDashboard)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )
           )}

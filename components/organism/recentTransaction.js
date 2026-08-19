@@ -11,7 +11,7 @@ function RecentTransaction({ income = [], expenses = [], selectedMonth = "all", 
   };
 
   const allTransactions = [
-    ...income.map((inc) => ({
+    ...(income || []).map((inc) => ({
       id: inc.id,
       type: "income",
       title: inc.category || "Pemasukan",
@@ -19,16 +19,19 @@ function RecentTransaction({ income = [], expenses = [], selectedMonth = "all", 
       amount: inc.amount,
       createdAt: parseDate(inc.CreatedAt),
     })),
-    ...expenses.flatMap((cat) =>
-      cat.items.map((item) => ({
+    ...(expenses || []).flatMap((cat) => {
+      // PROTEKSI SAFE-GUARD: Memastikan cat.items adalah Array
+      const itemsList = Array.isArray(cat?.items) ? cat.items : [];
+      
+      return itemsList.map((item) => ({
         id: item.id,
         type: "expense",
         title: cat.title,
-        description: item.description || "Tanpa Deskripsi",
+        description: item.description || item.name || "Tanpa Deskripsi",
         amount: item.amount,
         createdAt: parseDate(item.CreatedAt),
-      }))
-    ),
+      }));
+    }),
   ];
 
   const filteredTransactions = allTransactions.filter((item) => {
@@ -51,9 +54,6 @@ function RecentTransaction({ income = [], expenses = [], selectedMonth = "all", 
 
   return (
     <div className="w-full">
-      {/* Header Transaksi */}
-     
-
       {/* Item List Transaksi */}
       <div className="flex flex-col gap-2.5">
         {displayedTransactions.map((item) => (
