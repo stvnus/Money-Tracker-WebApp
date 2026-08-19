@@ -7,12 +7,18 @@ import { toast } from "react-toastify";
 import { FaRegTrashAlt, FaPencilAlt, FaCheck, FaTimes } from "react-icons/fa";
 
 function ViewExpenseModal({ show, onClose, expense }) {
-  // Ambil deleteExpenseItem dari context (kita gunakan fungsi yang sama untuk meng-update array items)
+  // Ambil deleteExpenseItem dari context
   const { deleteExpenseItem, deleteExpenseCategory } = useContext(financeContext);
 
   // State untuk menyimpan ID item yang sedang di-edit dan teks deskripsi barunya
   const [editingItemId, setEditingItemId] = useState(null);
   const [editDescriptionValue, setEditDescriptionValue] = useState("");
+
+  // UTILITY UNTUK PARSING TANGGAL
+  const parseDate = (dateField) => {
+    if (!dateField) return new Date();
+    return dateField.toMillis ? new Date(dateField.toMillis()) : new Date(dateField);
+  };
 
   const deleteExpenseHandler = async () => {
     try {
@@ -29,7 +35,7 @@ function ViewExpenseModal({ show, onClose, expense }) {
       const updatedItems = expense.items.filter((i) => i.id !== item.id);
 
       const updatedExpense = {
-        ...expense, // Mempertahankan warna dan title kategori
+        ...expense,
         items: [...updatedItems],
         total: expense.total - item.amount,
       };
@@ -71,6 +77,15 @@ function ViewExpenseModal({ show, onClose, expense }) {
     }
   };
 
+  if (!expense) return null;
+
+  // SEMENTARA URUTKAN DULU DAFTAR ITEM DARI YANG TERBARU KE TERLAMA (Descending)
+  const sortedExpenseItems = [...(expense.items || [])].sort((a, b) => {
+    const dateA = parseDate(a.CreatedAt);
+    const dateB = parseDate(b.CreatedAt);
+    return dateB - dateA; // Waktu terbaru akan memiliki timestamp lebih besar
+  });
+
   return (
     <Modal show={show} onClose={onClose}>
       <div className="flex items-center justify-between">
@@ -84,7 +99,7 @@ function ViewExpenseModal({ show, onClose, expense }) {
         <h3 className="my-4 text-2xl border-b border-slate-700 pb-2 text-slate-100">Expense History</h3>
 
         <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1">
-          {expense.items.map((item) => {
+          {sortedExpenseItems.map((item) => {
             const isEditing = editingItemId === item.id;
 
             return (
@@ -129,7 +144,6 @@ function ViewExpenseModal({ show, onClose, expense }) {
                         setEditDescriptionValue(item.description || "");
                       }}
                     >
-                      {/* Format font disamakan menjadi font-medium, text-slate-100, dan text-base */}
                       <p className="font-medium text-slate-100 capitalize truncate text-base hover:text-lime-400 transition-colors">
                         {item.description || "No Description"}
                       </p>
@@ -141,10 +155,7 @@ function ViewExpenseModal({ show, onClose, expense }) {
                   )}
 
                   <small className="text-xs text-slate-400">
-                    {(item.CreatedAt?.toMillis
-                      ? new Date(item.CreatedAt.toMillis())
-                      : new Date(item.CreatedAt)
-                    ).toLocaleString("id-ID", {
+                    {parseDate(item.CreatedAt).toLocaleString("id-ID", {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -158,7 +169,6 @@ function ViewExpenseModal({ show, onClose, expense }) {
 
                 {/* SISI KANAN: Jumlah Nominal & Tombol Trash */}
                 <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-                  {/* Format font disesuaikan menjadi font-semibold dan text-slate-200 */}
                   <span className="font-semibold text-slate-200">
                     {currencyFormatter(item.amount)}
                   </span>
@@ -177,7 +187,7 @@ function ViewExpenseModal({ show, onClose, expense }) {
             );
           })}
 
-          {expense.items.length === 0 && (
+          {sortedExpenseItems.length === 0 && (
             <p className="text-sm text-slate-400 text-center py-4">Belum ada history pengeluaran.</p>
           )}
         </div>
